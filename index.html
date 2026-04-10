@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Medidor de Velocidad de Red</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f5f5f5;
+      text-align: center;
+    }
+    button {
+      padding: 12px 24px;
+      font-size: 16px;
+      background: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    #result {
+      margin-top: 20px;
+      font-size: 18px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>⚡ Medidor de Velocidad de Red</h1>
+  <p>Presiona el botón para medir tu velocidad de internet.</p>
+  <button id="startTest">Iniciar Prueba</button>
+  <div id="result">Esperando...</div>
+
+  <script>
+    const startTest = document.getElementById('startTest');
+    const resultDiv = document.getElementById('result');
+
+    startTest.addEventListener('click', async () => {
+      startTest.disabled = true;
+      resultDiv.textContent = "Probando velocidad...";
+
+      try {
+        // Medir ping (tiempo de respuesta)
+        const pingStart = performance.now();
+        await fetch('https://httpbin.org/get?cache_buster=' + Math.random(), { mode: 'no-cors' });
+        const ping = performance.now() - pingStart;
+
+        // Medir descarga (descargar 1MB)
+        const downloadStart = performance.now();
+        await fetch('https://httpbin.org/stream-bytes/1000000', { mode: 'no-cors' });
+        const downloadTime = performance.now() - downloadStart;
+        const downloadSpeed = ((1000000 / 1024 / 1024) / (downloadTime / 1000)).toFixed(2);
+
+        // Medir subida (subir 1MB)
+        const uploadStart = performance.now();
+        await fetch('https://httpbin.org/post', {
+          method: 'POST',
+          body: new Blob([new ArrayBuffer(1000000)]),
+          mode: 'no-cors'
+        });
+        const uploadTime = performance.now() - uploadStart;
+        const uploadSpeed = ((1000000 / 1024 / 1024) / (uploadTime / 1000)).toFixed(2);
+
+        resultDiv.innerHTML = `
+          📶 Ping: ${ping.toFixed(0)} ms<br>
+          ⬇️ Descarga: ${downloadSpeed} Mbps<br>
+          ⬆️ Subida: ${uploadSpeed} Mbps
+        `;
+      } catch (error) {
+        resultDiv.textContent = "Error al medir velocidad. Revisa tu conexión.";
+      } finally {
+        startTest.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
